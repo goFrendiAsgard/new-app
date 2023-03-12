@@ -12,6 +12,7 @@ start_docker = CmdTask(
         PortChecker(port=5672, timeout=5),
         HTTPChecker(port=15672, method='GET'),
         PortChecker(port=9092, timeout=5),
+        HTTPChecker(port=9000, method='GET'),
     ]
 )
 runner.register(start_docker)

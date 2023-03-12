@@ -1,6 +1,7 @@
 from helper.conversion import str_to_boolean
 import os
 
+app_name = os.environ.get('APP_NAME', 'app')
 app_broker_type = os.environ.get('APP_BROKER_TYPE', 'rabbitmq')
 app_host = os.environ.get('APP_HOST', '0.0.0.0')
 app_port = int(os.environ.get('APP_PORT', '8080'))

@@ -24,13 +24,15 @@ class KafkaPublishConnection():
 
 
 class KafkaConsumeConnection():
-    def __init__(self, connection_string: str):
+    def __init__(self, connection_string: str, group_id: Optional[str] = None):
         self.connection_string = connection_string
         self.consumer: Optional[AIOKafkaConsumer] = None
+        self.group_id = group_id
 
     async def __aenter__(self) -> AIOKafkaConsumer:
         self.consumer = AIOKafkaConsumer(
-            bootstrap_servers=self.connection_string
+            bootstrap_servers=self.connection_string,
+            group_id=self.group_id
         )
         await self.consumer.start()
         return self.consumer
@@ -90,9 +92,12 @@ class KafkaConsumer(Consumer):
     async def _run(self, retry: int):
         try:
             async with self.connection as consumer:
+                topics = list(self._handlers.keys())
+                consumer.subscribe(topics=topics)
                 while True:
                     async for message in consumer:
                         event_name = message.topic
+                        print(event_name, message)
                         handler = self._handlers.get(event_name)
                         if handler is None:
                             continue

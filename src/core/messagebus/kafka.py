@@ -23,24 +23,6 @@ class KafkaPublishConnection():
         await self.producer.stop()
 
 
-class KafkaConsumeConnection():
-    def __init__(self, connection_string: str, group_id: Optional[str] = None):
-        self.connection_string = connection_string
-        self.consumer: Optional[AIOKafkaConsumer] = None
-        self.group_id = group_id
-
-    async def __aenter__(self) -> AIOKafkaConsumer:
-        self.consumer = AIOKafkaConsumer(
-            bootstrap_servers=self.connection_string,
-            group_id=self.group_id
-        )
-        await self.consumer.start()
-        return self.consumer
-
-    async def __aexit__(self, exc_type, exc, tb):
-        await self.consumer.stop()
-
-
 class KafkaPublisher(Publisher):
     def __init__(
         self,
@@ -68,12 +50,34 @@ class KafkaPublisher(Publisher):
             await self._publish(event_name, message, retry-1)
 
 
+class KafkaConsumeConnection():
+    def __init__(self, connection_string: str, group_id: Optional[str] = None):
+        self.connection_string = connection_string
+        self.consumer: Optional[AIOKafkaConsumer] = None
+        self.group_id = group_id
+
+    async def __aenter__(self) -> AIOKafkaConsumer:
+        self.consumer = AIOKafkaConsumer(
+            bootstrap_servers=self.connection_string,
+            group_id=self.group_id,
+            # consumer_timeout_ms=1000,
+            # enable_auto_commit=False,
+            # auto_offset_reset='earliest'
+        )
+        await self.consumer.start()
+        return self.consumer
+
+    async def __aexit__(self, exc_type, exc, tb):
+        self.consumer.unsubscribe()
+        await self.consumer.stop()
+
+
 class KafkaConsumer(Consumer):
     def __init__(
         self,
         consume_connection: KafkaConsumeConnection,
         serializer: Optional[MessageSerializer] = None,
-        retry: int = 3
+        retry: int = 5
     ):
         self.serializer = get_default_message_serializer(serializer)
         self.connection = consume_connection
@@ -85,7 +89,7 @@ class KafkaConsumer(Consumer):
             self._handlers[event_name] = handler
             return handler
         return wrapper
-    
+
     async def run(self):
         return await self._run(self._retry)
 
@@ -107,7 +111,7 @@ class KafkaConsumer(Consumer):
                                 event_name, message.value
                             ))
                         )
-                    await asyncio.sleep(0.01)
+                    # await asyncio.sleep(0.01)
                     retry = self._retry
         except Exception:
             if retry == 0:

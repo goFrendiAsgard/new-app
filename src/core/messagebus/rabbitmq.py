@@ -67,7 +67,7 @@ class RMQConsumer(Consumer):
             self._handlers[event_name] = handler
             return handler
         return wrapper
-    
+
     async def run(self):
         return await self._run(self._retry)
 

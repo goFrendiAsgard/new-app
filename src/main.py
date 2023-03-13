@@ -14,7 +14,7 @@ async def startup_event():
 
 
 @consumer.register('coba')
-def handle_event(message):
+async def handle_event(message):
     messages.append(message)
     print(messages)
 

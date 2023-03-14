@@ -1,5 +1,6 @@
 from component.messagebus import publisher, consumer
 from component.app import app
+from component.log import logger
 from config import app_host, app_port, app_reload
 import asyncio
 import logging
@@ -10,6 +11,7 @@ messages = []
 
 @app.on_event('startup')
 async def startup_event():
+    logger.info('Started')
     asyncio.create_task(consumer.run())
 
 
@@ -31,4 +33,4 @@ async def handle_send():
 
 if __name__ == "__main__":
     logging.info(f'Run on {app_host}:{app_port}')
-    uvicorn.run("main:app", host=app_host, port=app_port, reload=app_reload)
+    uvicorn.run("main:app", host=app_host, port=app_port, reload=app_reload, workers=1)

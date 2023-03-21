@@ -44,7 +44,7 @@ class MessageSerializer():
         )
 
 
-def get_default_message_serializer(
+def get_message_serializer(
     serializer: Optional[MessageSerializer] = None
 ) -> MessageSerializer:
     if serializer is None:
